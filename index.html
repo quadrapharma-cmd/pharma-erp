@@ -183,6 +183,8 @@ const defaultDB = {
   cmos:[], productionOrders:[], inventory:[], goodsReceipts:[],
   registrations:[], distributors:[], deliveryOrders:[], deliveryItems:[],
   expenses:[], employees:[], budgetLines:[], campaigns:[], salesTargets:[],
+  receivables:[], payrollRuns:[], purchaseOrders:[], qualityChecks:[],
+  returns:[], contracts:[],
   _seq:{}
 };
 
@@ -305,6 +307,15 @@ const navItems=[
   {id:'budget',icon:'💰',label:'الميزانية',section:'المالية'},
   {id:'marketing',icon:'📢',label:'الدعاية والمبيعات',section:'المالية'},
   {id:'reports',icon:'📈',label:'التقارير المالية',section:'المالية'},
+  {id:'receivables',icon:'💳',label:'الحسابات والذمم',section:'المالية'},
+  {id:'payroll',icon:'💼',label:'مسير الرواتب',section:'المالية'},
+  {id:'purchasing',icon:'📦',label:'إدارة المشتريات',section:'العمليات'},
+  {id:'quality',icon:'🔬',label:'ضبط الجودة QC',section:'العمليات'},
+  {id:'expiry',icon:'📅',label:'صلاحية المنتجات',section:'العمليات'},
+  {id:'returns',icon:'🔄',label:'المرتجعات',section:'العمليات'},
+  {id:'contracts',icon:'📝',label:'العقود والاتفاقيات',section:'العمليات'},
+  {id:'salesvstarget',icon:'📊',label:'المبيعات vs الأهداف',section:'العمليات'},
+  {id:'costanalysis',icon:'📉',label:'تحليل تكلفة المنتج',section:'العمليات'},
 ];
 
 function renderNav(){
@@ -735,6 +746,286 @@ reports(){
 },
 
 }; // end PAGES
+
+
+// ═══════════════════════════════════════════════
+// NEW PAGES
+// ═══════════════════════════════════════════════
+
+receivables(){
+  const rows=getAll('receivables');
+  const total=rows.reduce((s,r)=>s+Number(r.amount||0),0);
+  const collected=rows.filter(r=>r.status==='محصّل').reduce((s,r)=>s+Number(r.amount||0),0);
+  const pending=rows.filter(r=>r.status==='معلق').reduce((s,r)=>s+Number(r.amount||0),0);
+  const overdue=rows.filter(r=>r.status==='متأخر').reduce((s,r)=>s+Number(r.amount||0),0);
+  setPage('الحسابات والذمم','تتبع ذمم الموزعين وحالة السداد',
+    `<button class="btn btn-green" onclick="addReceivable()">${ic.plus} إضافة ذمة</button>`,
+    `<div class="stats-grid g4">
+      <div class="stat-card"><div class="lbl">إجمالي الذمم</div><div class="val text-blue">${fmt(total)} ج.م</div></div>
+      <div class="stat-card"><div class="lbl">محصّل</div><div class="val text-green">${fmt(collected)} ج.م</div></div>
+      <div class="stat-card"><div class="lbl">معلق</div><div class="val text-amber">${fmt(pending)} ج.م</div></div>
+      <div class="stat-card"><div class="lbl">متأخر</div><div class="val text-red">${fmt(overdue)} ج.م</div></div>
+    </div>
+    <div class="card">${tbl(['الموزع','رقم الفاتورة','المبلغ (ج.م)','تاريخ الاستحقاق','أيام التأخير','الحالة','ملاحظات',''],
+      rows.map(r=>{
+        const days=r.dueDate?Math.floor((new Date()-new Date(r.dueDate))/86400000):0;
+        const isLate=r.status==='معلق'&&days>0;
+        return tr(
+          getAll('distributors').find(d=>d.id===r.distributorId)?.name||r.distributorName||'-',
+          r.invoiceNumber||'-',
+          `<span class="${r.status==='محصّل'?'text-green':r.status==='متأخر'?'text-red':'text-amber'} fw7">${fmt(r.amount)} ج.م</span>`,
+          r.dueDate||'-',
+          isLate?`<span class="text-red fw7">${days} يوم</span>`:'-',
+          badge(r.status==='محصّل'?'received':r.status==='متأخر'?'expired':'pending'),
+          r.notes||'-',
+          `<button class="icon-btn edit" onclick="editReceivable(${r.id})">${ic.edit}</button>
+           <button class="icon-btn del" onclick="if(confirm('حذف؟')){remove('receivables',${r.id});go('receivables')}">${ic.del}</button>`
+        );
+      })
+    )}</div>`);
+},
+
+payroll(){
+  const emps=getAll('employees').filter(e=>e.status==='active');
+  const runs=getAll('payrollRuns');
+  const totalMonthly=emps.reduce((s,e)=>s+Number(e.salary||0),0);
+  setPage('مسير الرواتب','حساب وصرف رواتب الموظفين',
+    `<button class="btn btn-green" onclick="generatePayroll()">${ic.plus} صرف رواتب الشهر</button>`,
+    `<div class="stats-grid g3">
+      <div class="stat-card"><div class="lbl">الموظفون النشطون</div><div class="val">${emps.length}</div></div>
+      <div class="stat-card"><div class="lbl">إجمالي الرواتب الشهرية</div><div class="val text-red">${fmt(totalMonthly)} ج.م</div></div>
+      <div class="stat-card"><div class="lbl">الرواتب السنوية</div><div class="val text-purple">${fmt(totalMonthly*12)} ج.م</div></div>
+    </div>
+    <div class="tabs"><button class="tab active" data-group="pay" data-tab="pay-emp">كشف الرواتب</button><button class="tab" data-group="pay" data-tab="pay-hist">سجل الصرف</button></div>
+    <div id="pay-emp" class="tab-pane" data-group="pay"><div class="card">${tbl(['الاسم','القسم','الراتب الأساسي','البدلات','الخصومات','صافي الراتب',''],
+      emps.map(e=>{
+        const allowances=Number(e.allowances||0);
+        const deductions=Number(e.deductions||0);
+        const net=Number(e.salary||0)+allowances-deductions;
+        return tr(
+          `<strong>${e.name}</strong>`,e.department,
+          fmt(e.salary)+' ج.م',
+          allowances?fmt(allowances)+' ج.م':'—',
+          deductions?`<span class="text-red">${fmt(deductions)} ج.م</span>`:'—',
+          `<span class="text-green fw7">${fmt(net)} ج.م</span>`,
+          `<button class="icon-btn edit" onclick="editPayrollEmp(${e.id})">${ic.edit}</button>`
+        );
+      })
+    )}</div></div>
+    <div id="pay-hist" class="tab-pane" data-group="pay" style="display:none"><div class="card">${tbl(['الشهر','السنة','عدد الموظفين','إجمالي الصرف (ج.م)','تاريخ الصرف',''],
+      runs.map(r=>tr(
+        ['يناير','فبراير','مارس','إبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][r.month-1]||r.month,
+        r.year,fmtN(r.employeeCount),
+        `<span class="text-green fw7">${fmt(r.totalAmount)} ج.م</span>`,
+        r.payDate||'-',
+        `<button class="icon-btn del" onclick="if(confirm('حذف؟')){remove('payrollRuns',${r.id});go('payroll')}">${ic.del}</button>`
+      ))
+    )}</div></div>`);
+  initTabs();
+},
+
+purchasing(){
+  const rows=getAll('purchaseOrders');
+  const pending=rows.filter(r=>r.status==='معلق').reduce((s,r)=>s+Number(r.totalAmount||0),0);
+  const received=rows.filter(r=>r.status==='مستلم').reduce((s,r)=>s+Number(r.totalAmount||0),0);
+  setPage('إدارة المشتريات','طلبات شراء المواد الخام من الموردين',
+    `<button class="btn btn-green" onclick="addPurchaseOrder()">${ic.plus} طلب شراء جديد</button>`,
+    `<div class="stats-grid g3">
+      <div class="stat-card"><div class="lbl">طلبات معلقة</div><div class="val text-amber">${fmt(pending)} ج.م</div></div>
+      <div class="stat-card"><div class="lbl">مستلمة</div><div class="val text-green">${fmt(received)} ج.م</div></div>
+      <div class="stat-card"><div class="lbl">إجمالي الطلبات</div><div class="val">${rows.length}</div></div>
+    </div>
+    <div class="card">${tbl(['رقم الطلب','المادة','المورد','الكمية','الوحدة','سعر الوحدة','الإجمالي','تاريخ الطلب','الحالة',''],
+      rows.map(o=>tr(
+        `<code>${o.poNumber||'PUR-'+o.id}</code>`,
+        getAll('materials').find(m=>m.id===o.materialId)?.name||o.materialName||'-',
+        o.supplier||'-',
+        fmtN(o.quantity),
+        getAll('materials').find(m=>m.id===o.materialId)?.unit||o.unit||'-',
+        o.unitPrice?fmt(o.unitPrice)+' ج.م':'-',
+        o.totalAmount?`<span class="text-blue fw7">${fmt(o.totalAmount)} ج.م</span>`:'-',
+        o.orderDate||'-',
+        badge(o.status==='مستلم'?'received':o.status==='ملغي'?'cancelled':'pending'),
+        `<button class="icon-btn edit" onclick="editPurchaseOrder(${o.id})">${ic.edit}</button>
+         <button class="icon-btn del" onclick="if(confirm('حذف؟')){remove('purchaseOrders',${o.id});go('purchasing')}">${ic.del}</button>`
+      ))
+    )}</div>`);
+},
+
+quality(){
+  const rows=getAll('qualityChecks');
+  const passed=rows.filter(r=>r.result==='ناجح').length;
+  const failed=rows.filter(r=>r.result==='مرفوض').length;
+  setPage('ضبط الجودة QC','فحص وإفراج الدفعات الإنتاجية',
+    `<button class="btn btn-green" onclick="addQualityCheck()">${ic.plus} إضافة فحص جودة</button>`,
+    `<div class="stats-grid g4">
+      <div class="stat-card"><div class="lbl">إجمالي الفحوصات</div><div class="val">${rows.length}</div></div>
+      <div class="stat-card"><div class="lbl">ناجح ✅</div><div class="val text-green">${passed}</div></div>
+      <div class="stat-card"><div class="lbl">مرفوض ❌</div><div class="val text-red">${failed}</div></div>
+      <div class="stat-card"><div class="lbl">معدل النجاح</div><div class="val text-blue">${rows.length?((passed/rows.length)*100).toFixed(1)+'%':'—'}</div></div>
+    </div>
+    <div class="card">${tbl(['المنتج','رقم الدفعة','تاريخ الفحص','الكيميائي المسؤول','المعايير المفحوصة','النتيجة','قرار الإفراج','ملاحظات',''],
+      rows.map(r=>tr(
+        getAll('products').find(p=>p.id===r.productId)?.name||'-',
+        r.batchNumber||'-',
+        r.checkDate||'-',
+        r.analyst||'-',
+        r.tests||'-',
+        `<span class="${r.result==='ناجح'?'text-green fw7':'text-red fw7'}">${r.result||'-'}</span>`,
+        r.result==='ناجح'
+          ?'<span class="badge b-green">مُفرَج عنه</span>'
+          :'<span class="badge b-red">محجوز</span>',
+        r.notes||'-',
+        `<button class="icon-btn edit" onclick="editQualityCheck(${r.id})">${ic.edit}</button>
+         <button class="icon-btn del" onclick="if(confirm('حذف؟')){remove('qualityChecks',${r.id});go('quality')}">${ic.del}</button>`
+      ))
+    )}</div>`);
+},
+
+expiry(){
+  const inv=getAll('inventory');
+  const now=new Date();
+  const items=inv.map(i=>{
+    const prod=getAll('products').find(p=>p.id===i.productId);
+    const days=i.expiryDate?Math.floor((new Date(i.expiryDate)-now)/86400000):9999;
+    return {...i,productName:prod?.name||'-',daysLeft:days};
+  }).sort((a,b)=>a.daysLeft-b.daysLeft);
+  const exp90=items.filter(i=>i.daysLeft>=0&&i.daysLeft<=90);
+  const exp180=items.filter(i=>i.daysLeft>90&&i.daysLeft<=180);
+  const expired=items.filter(i=>i.daysLeft<0);
+  setPage('صلاحية المنتجات','مراقبة تواريخ انتهاء الصلاحية','',
+    `${expired.length?`<div class="alert alert-warn">${ic.warn}<div><strong>منتجات انتهت صلاحيتها (${expired.length}):</strong> ${expired.map(i=>i.productName).join(' • ')}</div></div>`:''}
+    ${exp90.length?`<div class="alert alert-warn">${ic.warn}<div><strong>تنتهي خلال 90 يوم (${exp90.length}):</strong> ${exp90.map(i=>i.productName).join(' • ')}</div></div>`:''}
+    <div class="stats-grid g4">
+      <div class="stat-card"><div class="lbl">منتهية الصلاحية</div><div class="val text-red">${expired.length}</div></div>
+      <div class="stat-card"><div class="lbl">تنتهي خلال 90 يوم</div><div class="val text-amber">${exp90.length}</div></div>
+      <div class="stat-card"><div class="lbl">تنتهي خلال 6 أشهر</div><div class="val text-blue">${exp180.length}</div></div>
+      <div class="stat-card"><div class="lbl">آمن</div><div class="val text-green">${items.filter(i=>i.daysLeft>180).length}</div></div>
+    </div>
+    <div class="card">${tbl(['المنتج','رقم التشغيلة','الكمية','تاريخ الانتهاء','الأيام المتبقية','الحالة'],
+      items.filter(i=>i.expiryDate).map(i=>{
+        const status=i.daysLeft<0?'منتهي':i.daysLeft<=90?'خطر':i.daysLeft<=180?'تنبيه':'آمن';
+        const col=i.daysLeft<0?'text-red fw7':i.daysLeft<=90?'text-amber fw7':i.daysLeft<=180?'text-blue':'text-green';
+        return tr(
+          `<strong>${i.productName}</strong>`,i.batchNumber||'-',fmtN(i.quantity),
+          i.expiryDate||'-',
+          `<span class="${col}">${i.daysLeft<0?'منتهية':i.daysLeft+' يوم'}</span>`,
+          `<span class="${col}">${status}</span>`
+        );
+      })
+    )}</div>`);
+},
+
+returns(){
+  const rows=getAll('returns');
+  const total=rows.reduce((s,r)=>s+Number(r.quantity||0),0);
+  setPage('المرتجعات','تسجيل البضاعة المرتجعة من الموزعين',
+    `<button class="btn btn-green" onclick="addReturn()">${ic.plus} تسجيل مرتجع</button>`,
+    `<div class="stats-grid g3">
+      <div class="stat-card"><div class="lbl">إجمالي المرتجعات</div><div class="val text-red">${rows.length}</div></div>
+      <div class="stat-card"><div class="lbl">إجمالي الوحدات</div><div class="val text-amber">${fmtN(total)}</div></div>
+      <div class="stat-card"><div class="lbl">قيمة المرتجعات</div><div class="val text-red">${fmt(rows.reduce((s,r)=>s+Number(r.totalValue||0),0))} ج.م</div></div>
+    </div>
+    <div class="card">${tbl(['الموزع','المنتج','رقم التشغيلة','الكمية','سبب الإرجاع','تاريخ الإرجاع','الإجراء المتخذ',''],
+      rows.map(r=>tr(
+        getAll('distributors').find(d=>d.id===r.distributorId)?.name||'-',
+        getAll('products').find(p=>p.id===r.productId)?.name||'-',
+        r.batchNumber||'-',fmtN(r.quantity),
+        r.reason||'-',r.returnDate||'-',
+        badge(r.action==='إتلاف'?'cancelled':r.action==='إعادة مخزون'?'received':'pending'),
+        `<button class="icon-btn del" onclick="if(confirm('حذف؟')){remove('returns',${r.id});go('returns')}">${ic.del}</button>`
+      ))
+    )}</div>`);
+},
+
+contracts(){
+  const rows=getAll('contracts');
+  const now=new Date();
+  const expiring=rows.filter(r=>r.endDate&&(new Date(r.endDate)-now)/86400000<=90&&new Date(r.endDate)>now);
+  setPage('العقود والاتفاقيات','عقود الموزعين والمصانع وتواريخ التجديد',
+    `<button class="btn btn-green" onclick="addContract()">${ic.plus} إضافة عقد</button>`,
+    `${expiring.length?`<div class="alert alert-warn">${ic.warn}<div><strong>عقود تنتهي خلال 90 يوم (${expiring.length}):</strong> ${expiring.map(r=>r.partyName).join(' • ')}</div></div>`:''}
+    <div class="card">${tbl(['الطرف الثاني','نوع العقد','تاريخ البداية','تاريخ الانتهاء','الأيام المتبقية','القيمة (ج.م)','الحالة',''],
+      rows.map(r=>{
+        const days=r.endDate?Math.floor((new Date(r.endDate)-now)/86400000):9999;
+        return tr(
+          `<strong>${r.partyName}</strong>`,
+          badge(r.contractType==='موزع'?'direct':r.contractType==='مصنع'?'in_production':'pending'),
+          r.startDate||'-',
+          r.endDate||'-',
+          `<span class="${days<0?'text-red':days<=90?'text-amber':'text-green'} fw7">${days<0?'منتهي':days+' يوم'}</span>`,
+          r.value?fmt(r.value)+' ج.م':'-',
+          badge(days<0?'expired':days<=90?'pending':'active'),
+          `<button class="icon-btn edit" onclick="editContract(${r.id})">${ic.edit}</button>
+           <button class="icon-btn del" onclick="if(confirm('حذف؟')){remove('contracts',${r.id});go('contracts')}">${ic.del}</button>`
+        );
+      })
+    )}</div>`);
+},
+
+salesvstarget(){
+  const targets=getAll('salesTargets');
+  const deliveries=getAll('deliveryOrders').filter(o=>o.status==='delivered');
+  setPage('المبيعات vs الأهداف','مقارنة المبيعات الفعلية بالأهداف المحددة','',
+    `<div class="card">${tbl(['المنتج','الموزع','السنة','الشهر','الهدف (ج.م)','الفعلي (ج.م)','الفرق (ج.م)','نسبة التحقق'],
+      targets.map(t=>{
+        const prod=getAll('products').find(p=>p.id===t.productId);
+        const dist=getAll('distributors').find(d=>d.id===t.distributorId);
+        const actual=deliveries
+          .filter(d=>(!t.distributorId||d.distributorId===t.distributorId))
+          .reduce((s,d)=>s+Number(d.totalAmount||0),0);
+        const target=Number(t.targetAmount||0);
+        const pct=target>0?(actual/target*100):0;
+        const col=pct>=100?'text-green':pct>=80?'text-amber':'text-red';
+        return tr(
+          prod?.name||'كل المنتجات',
+          dist?.name||'كل الموزعين',
+          t.year,
+          t.month?['يناير','فبراير','مارس','إبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][t.month-1]:'سنوي',
+          target?`<span class="text-blue fw7">${fmt(target)} ج.م</span>`:'-',
+          `<span class="text-green fw7">${fmt(actual)} ج.م</span>`,
+          `<span class="${actual>=target?'text-green':'text-red'} fw7">${fmt(actual-target)} ج.م</span>`,
+          `<span class="${col} fw7">${pct.toFixed(1)}%</span>`
+        );
+      })
+    )}</div>`);
+},
+
+costanalysis(){
+  const products=getAll('products');
+  const bom=getAll('productBOM');
+  const production=getAll('productionOrders');
+  const expenses=getAll('expenses');
+  const deliveries=getAll('deliveryOrders').filter(d=>d.status==='delivered');
+  setPage('تحليل تكلفة المنتج','تحليل cost per unit لكل منتج','',
+    `<div class="card">${tbl(['المنتج','تكلفة المواد/وحدة','تكلفة الإنتاج CMO/وحدة','تكلفة مباشرة أخرى','إجمالي التكلفة/وحدة','سعر البيع','هامش الربح','هامش %'],
+      products.map(p=>{
+        const materialCost=bom.filter(b=>b.productId===p.id).reduce((s,b)=>{
+          const mat=getAll('materials').find(m=>m.id===b.materialId);
+          return s+Number(b.quantityPerUnit||0)*Number(mat?.unitCost||0);
+        },0);
+        const prodOrders=production.filter(o=>o.productId===p.id);
+        const cmoCost=prodOrders.length?prodOrders.reduce((s,o)=>s+Number(o.unitCost||0),0)/prodOrders.length:0;
+        const directExp=expenses.filter(e=>e.expenseType==='direct').reduce((s,e)=>s+Number(e.amount||0),0);
+        const totalUnits=production.filter(o=>o.productId===p.id).reduce((s,o)=>s+Number(o.quantity||0),0)||1;
+        const directPerUnit=directExp/totalUnits;
+        const totalCost=materialCost+cmoCost+directPerUnit;
+        const price=Number(p.sellingPrice||0);
+        const margin=price-totalCost;
+        const marginPct=price>0?(margin/price*100):0;
+        return tr(
+          `<strong>${p.name}</strong>`,
+          materialCost?fmt(materialCost)+' ج.م':'—',
+          cmoCost?fmt(cmoCost)+' ج.م':'—',
+          fmt(directPerUnit)+' ج.م',
+          `<span class="text-red fw7">${fmt(totalCost)} ج.م</span>`,
+          price?`<span class="text-blue fw7">${fmt(price)} ج.م</span>`:'—',
+          margin?`<span class="${margin>=0?'text-green':'text-red'} fw7">${fmt(margin)} ج.م</span>`:'—',
+          `<span class="${marginPct>=30?'text-green':marginPct>=10?'text-amber':'text-red'} fw7">${marginPct.toFixed(1)}%</span>`
+        );
+      })
+    )}</div>`);
+},
 
 // ═══════════════════════════════════════════════
 // EXPENSE TABLE
@@ -1258,6 +1549,199 @@ function exportExcel(){
   // ── Export ──
   const date = new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb, `ERP-Report-${date}.xlsx`);
+}
+
+
+// ═══════════════════════════════════════════════
+// MODALS — NEW MODULES
+// ═══════════════════════════════════════════════
+
+function addReceivable(){
+  const dOpts=[{v:0,l:'اختر موزع...'},...getAll('distributors').map(d=>({v:d.id,l:d.name}))];
+  showModal(modal('إضافة ذمة مالية',`
+    ${fg('الموزع *',sel('rec-dist',dOpts))}
+    ${fg('رقم الفاتورة',inp('rec-inv'))}
+    ${fg('المبلغ (ج.م) *',inp('rec-amt','number'))}
+    ${fg('تاريخ الاستحقاق',inp('rec-due','date'))}
+    ${fg('الحالة',sel('rec-status',[{v:'معلق',l:'معلق'},{v:'محصّل',l:'محصّل'},{v:'متأخر',l:'متأخر'}],'معلق'))}
+    ${fg('ملاحظات',inp('rec-notes'))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveReceivable()">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function editReceivable(id){
+  const r=getById('receivables',id);if(!r)return;
+  const dOpts=[{v:0,l:'اختر موزع...'},...getAll('distributors').map(d=>({v:d.id,l:d.name}))];
+  showModal(modal('تعديل ذمة',`
+    ${fg('الموزع',sel('rec-dist',dOpts,r.distributorId))}
+    ${fg('رقم الفاتورة',inp('rec-inv','text',r.invoiceNumber))}
+    ${fg('المبلغ (ج.م)',inp('rec-amt','number',r.amount))}
+    ${fg('تاريخ الاستحقاق',inp('rec-due','date',r.dueDate))}
+    ${fg('الحالة',sel('rec-status',[{v:'معلق',l:'معلق'},{v:'محصّل',l:'محصّل'},{v:'متأخر',l:'متأخر'}],r.status))}
+    ${fg('ملاحظات',inp('rec-notes','text',r.notes))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveReceivable(${id})">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function saveReceivable(id){
+  const amt=val('rec-amt');if(!amt)return alert('يرجى إدخال المبلغ');
+  const distId=numVal('rec-dist');
+  const dist=getById('distributors',distId);
+  const d={distributorId:distId||null,distributorName:dist?.name||'',invoiceNumber:val('rec-inv')||null,amount:amt,dueDate:val('rec-due')||null,status:val('rec-status'),notes:val('rec-notes')||null};
+  id?update('receivables',id,d):insert('receivables',d);
+  closeModal();go('receivables');
+}
+
+function generatePayroll(){
+  const emps=getAll('employees').filter(e=>e.status==='active');
+  const total=emps.reduce((s,e)=>s+Number(e.salary||0)+Number(e.allowances||0)-Number(e.deductions||0),0);
+  const m=new Date().getMonth()+1, y=new Date().getFullYear();
+  showModal(modal('صرف رواتب الشهر',`
+    <div style="background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.3);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div class="fw7" style="font-size:15px;color:var(--green-light);margin-bottom:4px">ملخص الصرف</div>
+      <div style="color:var(--muted);font-size:13px">${emps.length} موظف · إجمالي: ${fmt(total)} ج.م</div>
+    </div>
+    ${fg('الشهر',sel('pay-month',[1,2,3,4,5,6,7,8,9,10,11,12].map((n,i)=>({v:n,l:['يناير','فبراير','مارس','إبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][i]})),m))}
+    ${fg('السنة',inp('pay-year','number',y))}
+    ${fg('تاريخ الصرف',inp('pay-date','date',today()))}
+    <div class="form-actions"><button class="btn btn-green" onclick="confirmPayroll()">✅ تأكيد الصرف</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function confirmPayroll(){
+  const emps=getAll('employees').filter(e=>e.status==='active');
+  const total=emps.reduce((s,e)=>s+Number(e.salary||0)+Number(e.allowances||0)-Number(e.deductions||0),0);
+  insert('payrollRuns',{month:numVal('pay-month'),year:numVal('pay-year'),employeeCount:emps.length,totalAmount:String(total),payDate:val('pay-date')||null});
+  closeModal();go('payroll');
+}
+function editPayrollEmp(id){
+  const e=getById('employees',id);if(!e)return;
+  showModal(modal('تعديل بيانات الراتب',`
+    <div class="fg"><label style="color:var(--green-light)">${e.name}</label></div>
+    ${fg('الراتب الأساسي (ج.م)',inp('ep-sal','number',e.salary))}
+    ${fg('البدلات (ج.م)',inp('ep-allow','number',e.allowances||0))}
+    ${fg('الخصومات (ج.م)',inp('ep-deduct','number',e.deductions||0))}
+    <div class="form-actions"><button class="btn btn-green" onclick="savePayrollEmp(${id})">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function savePayrollEmp(id){
+  update('employees',id,{salary:val('ep-sal')||null,allowances:val('ep-allow')||'0',deductions:val('ep-deduct')||'0'});
+  closeModal();go('payroll');
+}
+
+function addPurchaseOrder(){
+  const mOpts=[{v:0,l:'اختر مادة...'},...getAll('materials').map(m=>({v:m.id,l:m.name+' ('+m.unit+')'}))];
+  showModal(modal('طلب شراء جديد',`
+    ${fg('المادة *',sel('pur-mat',mOpts))}
+    ${fg('المورد',inp('pur-sup'))}
+    ${fg('الكمية *',inp('pur-qty','number'))}
+    ${fg('سعر الوحدة (ج.م)',inp('pur-price','number'))}
+    ${fg('تاريخ الطلب',inp('pur-date','date',today()))}
+    ${fg('تاريخ التسليم المتوقع',inp('pur-exp','date'))}
+    ${fg('الحالة',sel('pur-status',[{v:'معلق',l:'معلق'},{v:'مستلم',l:'مستلم'},{v:'ملغي',l:'ملغي'}],'معلق'))}
+    <div class="form-actions"><button class="btn btn-green" onclick="savePurchaseOrder()">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function editPurchaseOrder(id){
+  const o=getById('purchaseOrders',id);if(!o)return;
+  showModal(modal('تعديل طلب الشراء',`
+    ${fg('المورد',inp('pur-sup','text',o.supplier))}
+    ${fg('الكمية',inp('pur-qty','number',o.quantity))}
+    ${fg('سعر الوحدة (ج.م)',inp('pur-price','number',o.unitPrice))}
+    ${fg('تاريخ التسليم المتوقع',inp('pur-exp','date',o.expectedDate))}
+    ${fg('الحالة',sel('pur-status',[{v:'معلق',l:'معلق'},{v:'مستلم',l:'مستلم'},{v:'ملغي',l:'ملغي'}],o.status))}
+    <div class="form-actions"><button class="btn btn-green" onclick="savePurchaseOrder(${id})">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function savePurchaseOrder(id){
+  const qty=numVal('pur-qty'),price=numVal('pur-price');
+  if(!id&&!numVal('pur-mat'))return alert('يرجى اختيار المادة');
+  if(!qty)return alert('يرجى تحديد الكمية');
+  const matId=id?getById('purchaseOrders',id)?.materialId:numVal('pur-mat');
+  const mat=getById('materials',matId);
+  const d={materialId:matId,materialName:mat?.name||'',unit:mat?.unit||'',supplier:val('pur-sup')||null,quantity:qty,unitPrice:String(price)||null,totalAmount:String(qty*price),orderDate:id?null:val('pur-date')||null,expectedDate:val('pur-exp')||null,status:val('pur-status')};
+  if(id)update('purchaseOrders',id,d);else{d.poNumber='PUR-'+Date.now();insert('purchaseOrders',d);}
+  closeModal();go('purchasing');
+}
+
+function addQualityCheck(){
+  const pOpts=[{v:0,l:'اختر منتج...'},...getAll('products').map(p=>({v:p.id,l:p.name}))];
+  showModal(modal('إضافة فحص جودة',`
+    ${fg('المنتج *',sel('qc-prod',pOpts))}
+    ${fg('رقم الدفعة *',inp('qc-batch'))}
+    ${fg('تاريخ الفحص',inp('qc-date','date',today()))}
+    ${fg('الكيميائي المسؤول',inp('qc-analyst'))}
+    ${fg('المعايير المفحوصة',inp('qc-tests','text','','مثال: مطابقة، درجة النقاء، الفعالية'))}
+    ${fg('النتيجة *',sel('qc-result',[{v:'ناجح',l:'ناجح ✅'},{v:'مرفوض',l:'مرفوض ❌'},{v:'معلق',l:'معلق للمراجعة'}],'ناجح'))}
+    ${fg('ملاحظات',inp('qc-notes'))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveQualityCheck()">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function editQualityCheck(id){
+  const r=getById('qualityChecks',id);if(!r)return;
+  showModal(modal('تعديل فحص الجودة',`
+    ${fg('رقم الدفعة',inp('qc-batch','text',r.batchNumber))}
+    ${fg('الكيميائي المسؤول',inp('qc-analyst','text',r.analyst))}
+    ${fg('النتيجة',sel('qc-result',[{v:'ناجح',l:'ناجح ✅'},{v:'مرفوض',l:'مرفوض ❌'},{v:'معلق',l:'معلق للمراجعة'}],r.result))}
+    ${fg('ملاحظات',inp('qc-notes','text',r.notes))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveQualityCheck(${id})">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function saveQualityCheck(id){
+  const batch=val('qc-batch');
+  if(!id&&(!numVal('qc-prod')||!batch))return alert('يرجى تعبئة الحقول الإلزامية');
+  const d={batchNumber:batch||val('qc-batch'),analyst:val('qc-analyst')||null,checkDate:id?null:val('qc-date')||null,tests:val('qc-tests')||null,result:val('qc-result'),notes:val('qc-notes')||null};
+  if(id)update('qualityChecks',id,d);else{d.productId=numVal('qc-prod');insert('qualityChecks',d);}
+  closeModal();go('quality');
+}
+
+function addReturn(){
+  const dOpts=[{v:0,l:'اختر موزع...'},...getAll('distributors').map(d=>({v:d.id,l:d.name}))];
+  const pOpts=[{v:0,l:'اختر منتج...'},...getAll('products').map(p=>({v:p.id,l:p.name}))];
+  showModal(modal('تسجيل مرتجع',`
+    ${fg('الموزع *',sel('ret-dist',dOpts))}
+    ${fg('المنتج *',sel('ret-prod',pOpts))}
+    ${fg('رقم التشغيلة',inp('ret-batch'))}
+    ${fg('الكمية المرتجعة *',inp('ret-qty','number'))}
+    ${fg('سبب الإرجاع *',sel('ret-reason',[{v:'قارب الانتهاء',l:'قارب الانتهاء'},{v:'تلف',l:'تلف'},{v:'خطأ في الشحن',l:'خطأ في الشحن'},{v:'عيب تصنيع',l:'عيب تصنيع'},{v:'أخرى',l:'أخرى'}],'قارب الانتهاء'))}
+    ${fg('الإجراء المتخذ',sel('ret-action',[{v:'إعادة مخزون',l:'إعادة للمخزون'},{v:'إتلاف',l:'إتلاف'},{v:'إعادة للمصنع',l:'إعادة للمصنع'}],'إعادة مخزون'))}
+    ${fg('تاريخ الإرجاع',inp('ret-date','date',today()))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveReturn()">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function saveReturn(){
+  const distId=numVal('ret-dist'),prodId=numVal('ret-prod'),qty=numVal('ret-qty');
+  if(!prodId||!qty)return alert('يرجى تعبئة الحقول الإلزامية');
+  const prod=getById('products',prodId);
+  insert('returns',{distributorId:distId||null,productId:prodId,batchNumber:val('ret-batch')||null,quantity:qty,totalValue:String(qty*Number(prod?.sellingPrice||0)),reason:val('ret-reason'),action:val('ret-action'),returnDate:val('ret-date')||null});
+  closeModal();go('returns');
+}
+
+function addContract(){
+  showModal(modal('إضافة عقد جديد',`
+    ${fg('اسم الطرف الثاني *',inp('con-name'))}
+    ${fg('نوع العقد',sel('con-type',[{v:'موزع',l:'موزع'},{v:'مصنع',l:'مصنع CMO'},{v:'مورد',l:'مورد مواد'},{v:'أخرى',l:'أخرى'}],'موزع'))}
+    ${fg('تاريخ البداية',inp('con-start','date',today()))}
+    ${fg('تاريخ الانتهاء',inp('con-end','date'))}
+    ${fg('قيمة العقد (ج.م)',inp('con-val','number'))}
+    ${fg('ملاحظات',inp('con-notes'))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveContract()">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function editContract(id){
+  const c=getById('contracts',id);if(!c)return;
+  showModal(modal('تعديل عقد',`
+    ${fg('اسم الطرف الثاني *',inp('con-name','text',c.partyName))}
+    ${fg('نوع العقد',sel('con-type',[{v:'موزع',l:'موزع'},{v:'مصنع',l:'مصنع CMO'},{v:'مورد',l:'مورد مواد'},{v:'أخرى',l:'أخرى'}],c.contractType))}
+    ${fg('تاريخ البداية',inp('con-start','date',c.startDate))}
+    ${fg('تاريخ الانتهاء',inp('con-end','date',c.endDate))}
+    ${fg('قيمة العقد (ج.م)',inp('con-val','number',c.value))}
+    ${fg('ملاحظات',inp('con-notes','text',c.notes))}
+    <div class="form-actions"><button class="btn btn-green" onclick="saveContract(${id})">💾 حفظ</button><button class="btn btn-ghost" onclick="closeModal()">إلغاء</button></div>
+  `));
+}
+function saveContract(id){
+  const name=val('con-name');if(!name)return alert('يرجى كتابة اسم الطرف الثاني');
+  const d={partyName:name,contractType:val('con-type'),startDate:val('con-start')||null,endDate:val('con-end')||null,value:val('con-val')||null,notes:val('con-notes')||null};
+  id?update('contracts',id,d):insert('contracts',d);
+  closeModal();go('contracts');
 }
 
 // ═══════════════════════════════════════════════
