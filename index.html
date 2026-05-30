@@ -138,56 +138,59 @@ strong{font-weight:700;color:var(--text)}
 
 /* ═══ COMPANY SELECTOR ═══ */
 #company-screen{
-  position:fixed;inset:0;background:#0d1117;z-index:999;
+  position:fixed;inset:0;background:#0d1117;z-index:9999;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  font-family:'Cairo',sans-serif;
+  font-family:'Cairo',sans-serif;direction:rtl;
 }
 .cs-logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#2ea043,#1a7f37);
   display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;color:#fff;
   margin-bottom:20px;box-shadow:0 0 40px rgba(46,160,67,.4)}
-.cs-title{font-size:22px;font-weight:700;color:#e6edf3;margin-bottom:4px}
-.cs-sub{font-size:13px;color:#8b949e;margin-bottom:40px}
-.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;
-  width:100%;max-width:720px;padding:0 20px;margin-bottom:24px;max-height:360px;overflow-y:auto}
+.cs-title{font-size:24px;font-weight:700;color:#e6edf3;margin-bottom:6px}
+.cs-sub{font-size:13px;color:#8b949e;margin-bottom:36px}
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;
+  width:100%;max-width:700px;padding:0 20px;margin-bottom:20px;max-height:380px;overflow-y:auto}
 .cs-card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:20px;
-  cursor:pointer;transition:all .2s;text-align:right;position:relative}
-.cs-card:hover{border-color:#2ea043;background:#0d2818;transform:translateY(-2px)}
-.cs-card .cs-company-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;
-  justify-content:center;font-size:20px;font-weight:900;color:#fff;margin-bottom:12px}
-.cs-card .cs-company-name{font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:4px}
-.cs-card .cs-company-type{font-size:12px;color:#8b949e}
-.cs-card .cs-delete{position:absolute;top:10px;left:10px;background:none;border:none;
-  color:#f85149;cursor:pointer;font-size:16px;opacity:0;transition:opacity .15s;padding:4px}
-.cs-card:hover .cs-delete{opacity:1}
-.cs-add-card{background:rgba(46,160,67,.08);border:1px dashed rgba(46,160,67,.4);
+  cursor:pointer;transition:all .18s;text-align:right;position:relative}
+.cs-card:hover{border-color:#2ea043;background:#0d2818}
+.cs-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;font-weight:900;color:#fff;margin-bottom:10px}
+.cs-name{font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:3px}
+.cs-type{font-size:12px;color:#8b949e}
+.cs-del{position:absolute;top:10px;left:10px;background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.3);
+  color:#f85149;cursor:pointer;font-size:12px;padding:3px 8px;border-radius:6px;opacity:0;transition:.15s}
+.cs-card:hover .cs-del{opacity:1}
+.cs-del:hover{background:rgba(248,81,73,.3)}
+.cs-add{background:rgba(46,160,67,.08);border:1px dashed rgba(46,160,67,.35);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:8px;color:#3fb950;font-size:13px;font-weight:600}
-.cs-add-card:hover{background:rgba(46,160,67,.15);border-color:#2ea043}
-.cs-add-icon{font-size:28px}
-.cs-bottom{font-size:12px;color:#484f58;margin-top:8px}
-/* New company modal */
-#cs-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;
-  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-#cs-modal.show{display:flex}
-.cs-modal-box{background:#1c2128;border:1px solid #30363d;border-radius:16px;
-  width:100%;max-width:440px;padding:28px;font-family:'Cairo',sans-serif}
-.cs-modal-box h2{font-size:17px;font-weight:700;color:#e6edf3;margin-bottom:20px}
-.cs-field{margin-bottom:14px}
-.cs-field label{display:block;font-size:12px;font-weight:600;color:#8b949e;
+  gap:8px;color:#3fb950;font-size:13px;font-weight:600;min-height:110px}
+.cs-add:hover{background:rgba(46,160,67,.15)}
+.cs-foot{font-size:12px;color:#484f58}
+#cs-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10000;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#cs-modal.open{display:flex}
+.cs-box{background:#1c2128;border:1px solid #30363d;border-radius:16px;
+  width:100%;max-width:420px;padding:28px;font-family:'Cairo',sans-serif;direction:rtl}
+.cs-box h2{font-size:17px;font-weight:700;color:#e6edf3;margin-bottom:20px}
+.cs-f{margin-bottom:14px}
+.cs-f label{display:block;font-size:11px;font-weight:600;color:#8b949e;
   margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.cs-field input,.cs-field select{width:100%;background:#0d1117;border:1px solid #30363d;
+.cs-f input,.cs-f select{width:100%;background:#0d1117;border:1px solid #30363d;
   border-radius:8px;padding:9px 12px;font-size:13px;color:#e6edf3;font-family:'Cairo',sans-serif}
-.cs-field input:focus,.cs-field select:focus{outline:none;border-color:#2ea043;
-  box-shadow:0 0 0 3px rgba(46,160,67,.15)}
-.cs-colors{display:flex;gap:8px;flex-wrap:wrap}
-.cs-color{width:32px;height:32px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:border .15s}
-.cs-color.selected{border-color:#fff}
-.cs-btns{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #30363d}
-.cs-btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
-  border:none;font-family:'Cairo',sans-serif;transition:all .15s}
-.cs-btn-green{background:#2ea043;color:#fff}.cs-btn-green:hover{background:#3fb950}
-.cs-btn-ghost{background:transparent;color:#8b949e;border:1px solid #30363d}
-.cs-btn-ghost:hover{background:#21262d;color:#e6edf3}
+.cs-f input:focus,.cs-f select:focus{outline:none;border-color:#2ea043;box-shadow:0 0 0 3px rgba(46,160,67,.15)}
+.cs-palette{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.cs-swatch{width:32px;height:32px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:.15s}
+.cs-swatch.on{border-color:#fff;transform:scale(1.15)}
+.cs-acts{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #30363d}
+.cs-ok{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  border:none;font-family:'Cairo',sans-serif;background:#2ea043;color:#fff}
+.cs-ok:hover{background:#3fb950}
+.cs-cancel{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  background:transparent;color:#8b949e;border:1px solid #30363d;font-family:'Cairo',sans-serif}
+.cs-cancel:hover{background:#21262d;color:#e6edf3}
+.co-switcher{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+  border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #30363d;
+  background:transparent;color:#8b949e;font-family:'Cairo',sans-serif;transition:.15s}
+.co-switcher:hover{background:#21262d;color:#e6edf3}
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -195,40 +198,29 @@ strong{font-weight:700;color:var(--text)}
 <body>
 
 
-<!-- ═══ COMPANY SELECTOR SCREEN ═══ -->
 <div id="company-screen">
-  <div class="cs-logo">ف</div>
+  <div class="cs-logo" id="cs-main-logo">ف</div>
   <div class="cs-title">نظام ERP الدوائي</div>
-  <div class="cs-sub">اختر شركة للمتابعة أو أضف شركة جديدة</div>
+  <div class="cs-sub">اختر شركة أو أضف شركة جديدة</div>
   <div class="cs-grid" id="cs-grid"></div>
-  <div class="cs-bottom">كل شركة لها بيانات مستقلة تماماً</div>
+  <div class="cs-foot">كل شركة لها بيانات مستقلة تماماً ● البيانات محفوظة على جهازك</div>
 </div>
-
-<!-- New Company Modal -->
 <div id="cs-modal">
-  <div class="cs-modal-box">
-    <h2>➕ إضافة شركة جديدة</h2>
-    <div class="cs-field">
-      <label>اسم الشركة *</label>
-      <input type="text" id="cs-name" placeholder="مثال: شركة الدواء المتحدة">
-    </div>
-    <div class="cs-field">
-      <label>نوع النشاط</label>
-      <select id="cs-type">
-        <option>شركة دوائية</option>
-        <option>مستودع أدوية</option>
-        <option>مصنع دوائي</option>
-        <option>شركة توزيع</option>
-        <option>أخرى</option>
+  <div class="cs-box">
+    <h2>إضافة شركة جديدة</h2>
+    <div class="cs-f"><label>اسم الشركة *</label><input id="cs-inp-name" placeholder="مثال: شركة الدواء المتحدة" onkeydown="if(event.key==='Enter')saveNewCompany()"></div>
+    <div class="cs-f"><label>نوع النشاط</label>
+      <select id="cs-inp-type">
+        <option>شركة دوائية</option><option>مستودع أدوية</option>
+        <option>مصنع دوائي</option><option>شركة توزيع</option><option>أخرى</option>
       </select>
     </div>
-    <div class="cs-field">
-      <label>لون الشركة</label>
-      <div class="cs-colors" id="cs-colors"></div>
+    <div class="cs-f"><label>لون الشركة</label>
+      <div class="cs-palette" id="cs-palette"></div>
     </div>
-    <div class="cs-btns">
-      <button class="cs-btn cs-btn-green" onclick="createCompany()">✅ إنشاء الشركة</button>
-      <button class="cs-btn cs-btn-ghost" onclick="closeCSModal()">إلغاء</button>
+    <div class="cs-acts">
+      <button class="cs-ok" onclick="saveNewCompany()">إنشاء الشركة</button>
+      <button class="cs-cancel" onclick="closeCsModal()">إلغاء</button>
     </div>
   </div>
 </div>
@@ -257,7 +249,12 @@ strong{font-weight:700;color:var(--text)}
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     تصدير Excel
   </button>
+  <div style="display:flex;align-items:center;gap:8px">
+  <button class="co-switcher" onclick="switchToCompanyScreen()">🏢 <span id="co-name-label">الشركة</span></button>
+  <button class="btn btn-ghost" onclick="printPage()" style="gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>طباعة</button>
+  <button class="btn btn-ghost" onclick="exportExcel()" style="gap:6px;color:#3fb950;border-color:rgba(46,160,67,.4)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>تصدير Excel</button>
   <div id="pg-action"></div>
+</div>
 </div>
   </div>
   <div class="content" id="pg-content"></div>
@@ -268,151 +265,111 @@ strong{font-weight:700;color:var(--text)}
 <script>
 
 // ═══════════════════════════════════════════════
-// MULTI-COMPANY LAYER
+// MULTI-COMPANY
 // ═══════════════════════════════════════════════
-const COMPANIES_KEY = 'pharma_erp_companies';
-const PALETTE = ['2ea043','388bfd','f85149','e3b341','bc8cff','3fb950','d2a8ff','ffa657','79c0ff','56d364'];
-let currentCompany = null;
-let selectedColor = PALETTE[0];
+const CS_KEY = 'pharma_erp_companies_v1';
+const SWATCHES = ['2ea043','388bfd','f85149','e3b341','bc8cff','d2a8ff','ffa657','79c0ff','56d364','ff7b72'];
+let _csColor = SWATCHES[0];
+let _activeCompany = null;
 
-function getCompanies(){
-  try{ return JSON.parse(localStorage.getItem(COMPANIES_KEY)||'[]'); }catch(e){ return []; }
-}
-function saveCompanies(list){
-  localStorage.setItem(COMPANIES_KEY, JSON.stringify(list));
-}
+function _getCompanies(){ try{return JSON.parse(localStorage.getItem(CS_KEY)||'[]');}catch(e){return[];} }
+function _saveCompanies(l){ localStorage.setItem(CS_KEY,JSON.stringify(l)); }
 
-function renderCompanyScreen(){
-  const list = getCompanies();
+function renderCsScreen(){
+  const list = _getCompanies();
   const grid = document.getElementById('cs-grid');
+  if(!grid) return;
   grid.innerHTML = '';
-  list.forEach(c => {
-    const card = document.createElement('div');
-    card.className = 'cs-card';
-    card.innerHTML = `
-      <button class="cs-delete" onclick="event.stopPropagation();deleteCompany('${c.id}')" title="حذف الشركة">🗑</button>
-      <div class="cs-company-icon" style="background:#${c.color||'2ea043'}">${c.name.charAt(0)}</div>
-      <div class="cs-company-name">${c.name}</div>
-      <div class="cs-company-type">${c.type||'شركة دوائية'}</div>
+  list.forEach(c=>{
+    const d = document.createElement('div');
+    d.className = 'cs-card';
+    d.innerHTML = `
+      <button class="cs-del" onclick="event.stopPropagation();_delCompany('${c.id}')">حذف</button>
+      <div class="cs-icon" style="background:#${c.color||'2ea043'}">${(c.name||'؟').charAt(0)}</div>
+      <div class="cs-name">${c.name}</div>
+      <div class="cs-type">${c.type||'شركة دوائية'}</div>
     `;
-    card.onclick = () => selectCompany(c);
-    grid.appendChild(card);
+    d.onclick = ()=>_pickCompany(c);
+    grid.appendChild(d);
   });
-  // Add new card
-  const addCard = document.createElement('div');
-  addCard.className = 'cs-card cs-add-card';
-  addCard.innerHTML = '<div class="cs-add-icon">➕</div><div>إضافة شركة جديدة</div>';
-  addCard.onclick = () => openCSModal();
-  grid.appendChild(addCard);
+  const add = document.createElement('div');
+  add.className = 'cs-card cs-add';
+  add.innerHTML = '<div style="font-size:28px">➕</div><div>إضافة شركة جديدة</div>';
+  add.onclick = openCsModal;
+  grid.appendChild(add);
 }
 
-function selectCompany(c){
-  currentCompany = c;
-  // Update STORE_KEY to be company-specific
-  window._activeStoreKey = 'pharma_erp_v2_' + c.id;
-  // Load this company's data
-  try{
-    const d = localStorage.getItem(window._activeStoreKey);
-    DB = d ? JSON.parse(d) : {...defaultDB};
-    _nextId = {};
-  }catch(e){ DB = {...defaultDB}; _nextId = {}; }
-  // Update logo
-  document.querySelector('.logo-icon').textContent = c.name.charAt(0);
-  document.querySelector('.logo-icon').style.background = `linear-gradient(135deg,#${c.color||'2ea043'},#${c.color||'2ea043'}cc)`;
-  document.querySelector('.logo-text .t1').textContent = c.name;
-  document.querySelector('.logo-text .t2').textContent = c.type||'شركة دوائية';
-  // Show app
-  document.getElementById('company-screen').style.display = 'none';
-  // Re-render nav and go to dashboard
+function _pickCompany(c){
+  _activeCompany = c;
+  const storeKey = 'pharma_erp_v2_'+c.id;
+  // load data
+  try{ const d=localStorage.getItem(storeKey); DB=d?JSON.parse(d):{...defaultDB}; _nextId={}; }
+  catch(e){ DB={...defaultDB}; _nextId={}; }
+  // patch saveDB
+  window.__storeKey = storeKey;
+  // update branding
+  const li = document.querySelector('.logo-icon');
+  if(li){ li.textContent=(c.name||'').charAt(0); li.style.background=`linear-gradient(135deg,#${c.color||'2ea043'},#0d6630)`; }
+  const lt1=document.querySelector('.logo-text .t1');
+  const lt2=document.querySelector('.logo-text .t2');
+  if(lt1) lt1.textContent=c.name;
+  if(lt2) lt2.textContent=c.type||'شركة دوائية';
+  // hide selector, show app
+  document.getElementById('company-screen').style.display='none';
+  const lbl=document.getElementById('co-name-label');if(lbl)lbl.textContent=c.name;
   renderNav();
   go('dashboard');
 }
 
-function openCSModal(){
-  // Render color palette
-  const cc = document.getElementById('cs-colors');
-  cc.innerHTML = PALETTE.map(p => `
-    <div class="cs-color ${p===selectedColor?'selected':''}"
-      style="background:#${p}"
-      onclick="selectCSColor('${p}',this)"></div>
-  `).join('');
-  document.getElementById('cs-modal').classList.add('show');
-  setTimeout(()=>document.getElementById('cs-name').focus(),100);
-}
-function closeCSModal(){
-  document.getElementById('cs-modal').classList.remove('show');
-  document.getElementById('cs-name').value = '';
-}
-function selectCSColor(color, el){
-  selectedColor = color;
-  document.querySelectorAll('.cs-color').forEach(e=>e.classList.remove('selected'));
-  el.classList.add('selected');
-}
-function createCompany(){
-  const name = document.getElementById('cs-name').value.trim();
-  const type = document.getElementById('cs-type').value;
-  if(!name) return alert('يرجى كتابة اسم الشركة');
-  const id = 'co_' + Date.now();
-  const companies = getCompanies();
-  companies.push({id, name, type, color: selectedColor});
-  saveCompanies(companies);
-  closeCSModal();
-  renderCompanyScreen();
-}
-function deleteCompany(id){
-  if(!confirm('هل أنت متأكد من حذف هذه الشركة وكل بياناتها؟ لا يمكن التراجع!')) return;
-  // Remove company data
-  localStorage.removeItem('pharma_erp_v2_' + id);
-  // Remove from list
-  const companies = getCompanies().filter(c=>c.id!==id);
-  saveCompanies(companies);
-  renderCompanyScreen();
+function _delCompany(id){
+  if(!confirm('حذف هذه الشركة وكل بياناتها نهائياً؟')) return;
+  localStorage.removeItem('pharma_erp_v2_'+id);
+  _saveCompanies(_getCompanies().filter(c=>c.id!==id));
+  renderCsScreen();
 }
 
-// Switch company button in topbar
-function switchCompany(){
-  if(confirm('العودة لقائمة الشركات؟')) {
-    document.getElementById('company-screen').style.display = 'flex';
-    renderCompanyScreen();
+function openCsModal(){
+  _csColor = SWATCHES[0];
+  const pal = document.getElementById('cs-palette');
+  if(pal) pal.innerHTML = SWATCHES.map(s=>`<div class="cs-swatch${s===_csColor?' on':''}" style="background:#${s}" onclick="pickSwatch('${s}',this)"></div>`).join('');
+  const inp = document.getElementById('cs-inp-name');
+  if(inp) inp.value='';
+  document.getElementById('cs-modal').classList.add('open');
+  setTimeout(()=>{ if(inp) inp.focus(); },120);
+}
+function closeCsModal(){ document.getElementById('cs-modal').classList.remove('open'); }
+function pickSwatch(s,el){
+  _csColor=s;
+  document.querySelectorAll('.cs-swatch').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+}
+function saveNewCompany(){
+  const name=(document.getElementById('cs-inp-name')?.value||'').trim();
+  const type=document.getElementById('cs-inp-type')?.value||'شركة دوائية';
+  if(!name){ alert('يرجى كتابة اسم الشركة'); return; }
+  const id='co_'+Date.now();
+  const list=_getCompanies();
+  list.push({id,name,type,color:_csColor});
+  _saveCompanies(list);
+  closeCsModal();
+  renderCsScreen();
+}
+
+function switchToCompanyScreen(){
+  if(!confirm('العودة لقائمة الشركات؟')) return;
+  document.getElementById('company-screen').style.display='flex';
+  renderCsScreen();
+}
+
+// ── Init on load ──
+(function initMultiCompany(){
+  const list = _getCompanies();
+  if(list.length===0){
+    list.push({id:'co_default',name:'الشركة الدوائية',type:'شركة دوائية',color:'2ea043'});
+    _saveCompanies(list);
   }
-}
-
-// Override saveDB to use company-specific key
-const _origSaveDB = saveDB;
-function saveDB(){
-  if(window._activeStoreKey){
-    try{ localStorage.setItem(window._activeStoreKey, JSON.stringify(DB)); }catch(e){}
-  } else {
-    _origSaveDB();
-  }
-}
-
-// Add switch company button to topbar
-function addSwitchBtn(){
-  const action = document.getElementById('pg-action');
-  if(action && !document.getElementById('switch-co-btn')){
-    const btn = document.createElement('button');
-    btn.id = 'switch-co-btn';
-    btn.className = 'btn btn-ghost';
-    btn.style.marginLeft = '8px';
-    btn.innerHTML = '🏢 تغيير الشركة';
-    btn.onclick = switchCompany;
-    action.parentElement.insertBefore(btn, action.parentElement.firstChild);
-  }
-}
-
-// ── INIT: Show company screen first ──
-window.addEventListener('DOMContentLoaded', () => {
-  const companies = getCompanies();
-  if(companies.length === 0){
-    // First time: create default company
-    const id = 'co_default';
-    companies.push({id, name:'الشركة الدوائية', type:'شركة دوائية', color:'2ea043'});
-    saveCompanies(companies);
-  }
-  renderCompanyScreen();
-});
-
+  renderCsScreen();
+})();
 
 // ═══════════════════════════════════════════════
 // DATA LAYER — localStorage persistence
@@ -435,7 +392,7 @@ function loadDB(){
   try{ const d=localStorage.getItem(STORE_KEY); return d?JSON.parse(d):{...defaultDB}; }
   catch(e){ return {...defaultDB}; }
 }
-function saveDB(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(DB)); }catch(e){} }
+function saveDB(){ try{ localStorage.setItem(window.__storeKey||STORE_KEY,JSON.stringify(DB)); }catch(e){} }
 
 function nextId(t){
   if(!DB._seq)DB._seq={};
@@ -1988,9 +1945,7 @@ function saveContract(id){
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-renderNav();
-addSwitchBtn();
-go('dashboard');
+// app starts via _pickCompany() from company screen
 </script>
 </body>
 </html>
